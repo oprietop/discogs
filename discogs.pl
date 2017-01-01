@@ -27,13 +27,13 @@ our $opt_r = undef;  # Force our release id
 getopts('p:f:r:') or die RED BOLD "Usage: $0 [-p [PREFFIX] -f [FORMAT] -r [DISCOGS_RELEASE_ID] <directories>";
 $opt_p = decode('UTF-8', $opt_p); # Dat russian vinyl rippers...
 
-my $key            = 'rAzVUQYRaoFjeBjyWuWZ';             # Taken From the beets discogs plugin...
-my $secret         = 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy'; #
-my $ua             = LWP::UserAgent->new( timeout       => 10
-                                        , keep_alive    => 10
-                                        , show_progress => 1
-                                        , ssl_opts      => { verify_hostname => 1 }
-                                        );
+my $key    = 'rAzVUQYRaoFjeBjyWuWZ';             # Taken From the beets discogs plugin...
+my $secret = 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy'; #
+my $ua     = LWP::UserAgent->new( timeout       => 10
+                                , keep_alive    => 10
+                                , show_progress => 1
+                                , ssl_opts      => { verify_hostname => 1 }
+                                );
 
 print YELLOW "- Using preffix option: $opt_p\n" if defined $opt_p;
 print YELLOW "- Using format option: $opt_f\n" if defined $opt_f;
@@ -189,7 +189,8 @@ sub choose_media {
 sub build_album_name {
     my ($master_year, $release) = @_;
     my @album_info = ( clean_string($release->{labels}->[0]->{name}), clean_string($release->{labels}->[0]->{catno}) );
-    unshift(@album_info, $release->{released}) if $release->{released} > $master_year;
+    $release->{released} = 'Unknown' unless $release->{released};
+    unshift(@album_info, $release->{released}) if $release->{released} gt $master_year;
     push(@album_info, $release->{media_name}) if $release->{media_name};
     push(@album_info, $release->{country} || 'Unknown');
     push(@album_info, $opt_p) if defined $opt_p;
@@ -229,7 +230,7 @@ sub tag_files {
         $flac->{tags}->{ALBUM}               = $album_name;
         $flac->{tags}->{ALBUMNAME}           = $release->{title};
         $flac->{tags}->{DATE}                = $flac->tags->{ORIGINALDATE} = $master->{year};
-        $flac->{tags}->{RELEASEDATE}         = $release->{year};
+        $flac->{tags}->{RELEASEDATE}         = $release->{year} || $release->{released};
         $flac->{tags}->{GENRE}               = @{ $master->{genres} }[0] || @{ $release->{genres} }[0];
         $flac->{tags}->{STYLE}               = @{ $master->{styles} }[0] || @{ $release->{styles} }[0] || $flac->tags->{GENRE};
         $flac->{tags}->{MEDIA}               = $release->{formats}->[0]->{name};
